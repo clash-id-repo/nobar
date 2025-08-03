@@ -481,7 +481,34 @@
         async handleOffer(fromUserId, offer) { if (this.peerConnections[fromUserId]) return; const pc = this.createPeerConnection(fromUserId); await pc.setRemoteDescription(new RTCSessionDescription(offer)); const answer = await pc.createAnswer(); await pc.setLocalDescription(answer); this.sendMessage('webrtc-answer', { targetUserId: fromUserId, answer }); },
         async handleAnswer(fromUserId, answer) { const pc = this.peerConnections[fromUserId]; if (pc && pc.signalingState !== 'stable') await pc.setRemoteDescription(new RTCSessionDescription(answer)); },
         async handleCandidate(fromUserId, candidate) { const pc = this.peerConnections[fromUserId]; if (pc) { try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) { console.error('Error adding ICE candidate', e); } } },
-        async initiatePeerConnection(peerId) { if (!this.localStream || this.peerConnections[peerId]) return; const pc = this.createPeerConnection(peerId); const offer = await pc.createOffer(); await pc.setLocalDescription(offer); this.sendMessage('webrtc-offer', { targetUserId: peerId, offer }); },
+                async initiatePeerConnection(peerId) {
+            console.log(`%c[WebRTC Client] MEMULAI PROSES KONEKSI ke: ${peerId}`, 'color: #00bcd4; font-weight: bold;');
+            if (!this.localStream || this.peerConnections[peerId]) {
+                console.warn(`[WebRTC Client] Proses ke ${peerId} dibatalkan (stream tidak ada atau koneksi sudah ada).`);
+                return;
+            }
+
+            const pc = this.createPeerConnection(peerId);
+            console.log(`[WebRTC Client] Peer connection object dibuat untuk: ${peerId}`);
+
+            try {
+                // Langkah 1: Membuat "Offer"
+                const offer = await pc.createOffer();
+                console.log(`[WebRTC Client] Langkah 1: Offer berhasil dibuat untuk: ${peerId}`);
+
+                // Langkah 2: Menetapkan Offer sebagai deskripsi lokal
+                await pc.setLocalDescription(offer);
+                console.log(`[WebRTC Client] Langkah 2: Local description berhasil di-set untuk: ${peerId}`);
+
+                // Langkah 3: Mengirim Offer ke user lain via server
+                this.sendMessage('webrtc-offer', { targetUserId: peerId, offer });
+                console.log(`%c[WebRTC Client] Langkah 3: ===> PESAN OFFER DIKIRIM ke: ${peerId}`, 'color: #4caf50; font-weight: bold;');
+
+            } catch (err) {
+                // Jika salah satu langkah di atas gagal, ini akan tereksekusi
+                console.error(`[WebRTC Client] GAGAL saat membuat atau mengirim offer ke ${peerId}:`, err);
+            }
+        },
         async toggleFullscreen() { try { if (!document.fullscreenElement) { await this.elements.playerWrapper.requestFullscreen(); if (screen.orientation && typeof screen.orientation.lock === 'function') { await screen.orientation.lock('landscape').catch(() => {}); } } else { if (screen.orientation && typeof screen.orientation.unlock === 'function') { screen.orientation.unlock(); } await document.exitFullscreen(); } } catch (err) { console.error("Fullscreen/Landscape Error:", err); this.showAlert("Mode bioskop tidak dapat diaktifkan di perangkat atau browser ini."); } },
         handleFullscreenChange() {
             const isFullscreen = !!document.fullscreenElement;
