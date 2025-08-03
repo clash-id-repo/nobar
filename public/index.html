@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOBAR - Nonton Bareng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212; --surface-color: #1E1E1E; --surface-light: #2C2C2C; --primary-color: #A46DFF; --primary-hover: #9355f8; --secondary-color: #03DAC6; --text-color: #EAEAEA; --text-secondary: #A0A0A0; --border-color: rgba(255, 255, 255, 0.1); --danger-color: #CF6679; --online-color: #2ECC71; --font-family: 'Inter', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color); }
+        .page { display: none; }
+        
+        .page.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        #room-page header { flex-shrink: 0; }
+        #room-page #main-container { flex-grow: 1; overflow: hidden; }
+        
+        /* === PERBAIKAN LAYOUT MENYELURUH v20.1 === */
+
+        /* 1. Aturan Scrollbar Tipis */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: var(--surface-light); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #555; }
+        * { scrollbar-width: thin; scrollbar-color: var(--surface-light) transparent; }
+
+        #main-container { display: flex; padding: 1.5rem; gap: 1.5rem; overflow: hidden; }
+        
+        #left-panel { flex: 3; display: flex; flex-direction: column; min-width: 0; gap: 1rem; overflow-y: auto; }
+
+        #right-panel {
+            flex: 1;
+            min-width: 350px;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--surface-color);
+            border-radius: 16px;
+        }
+
+        .tab-content {
+            flex: 1;
+            min-height: 0;
+            display: none;
+            flex-direction: column;
+        }
+        .tab-content.active { display: flex; }
+        
+       .user-number {
+            color: var(--text-secondary);
+            font-weight: 500;
+            width: 25px; /* Memberi ruang agar sejajar */
+            text-align: right; /* Angka rata kanan */
+            flex-shrink: 0; /* Mencegah angka ter-compress */
+            margin-right: 0.5rem; /* Jarak antara angka dan avatar */
+        }
+
+        #chat-panel { position: relative; }
+        #chat-box { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+        #users-panel-content { flex: 1; padding: 1rem; overflow-y: auto; }
+        #playlist-container { max-height: 200px; overflow-y: auto; }
+        #chat-input-area { position: relative; flex-shrink: 0; }
+        
+        #emoji-picker-container {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            right: 1rem;
+            z-index: 100;
+            border-radius: 12px; 
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6); 
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        #emoji-picker-container.visible { display: block; }
+        
+        emoji-picker {
+            width: 320px;
+            height: 320px;
+            --background: var(--surface-light);
+            --border: none;
+            --border-radius: 0;
+            --text-color: var(--text-color);
+            --secondary-text-color: var(--text-secondary);
+            --indicator-color: var(--primary-color);
+            --hover-background: #444;
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            min-width: 0; /* KUNCI: Memperbaiki tombol kirim hilang di landscape */
+            padding: 0.75rem 1rem;
+            border-radius: 18px;
+            border: 1px solid #333;
+            background: var(--surface-light);
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        
+        /* === AKHIR PERBAIKAN CSS === */
+        
+        #room-page footer { flex-shrink: 0; padding: 1rem; background: var(--bg-color); border-top: 1px solid var(--border-color); text-align: center; font-weight: 500; color: var(--text-secondary); }
+        
+        #landing-page { justify-content: center; background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('https://raw.githubusercontent.com/thatanjan/netflix-clone-yt/youtube/media//banner.jpg'); background-size: cover; background-position: center; }
+        #landing-page > main { display: flex; justify-content: center; align-items: center; padding: 1.5rem; }
+        .form-container { background: rgba(30, 30, 30, 0.7); backdrop-filter: blur(12px); padding: 2.5rem; border-radius: 20px; border: 1px solid var(--border-color); width: 100%; max-width: 420px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); text-align: center; }
+        .form-container h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .form-container p { color: var(--text-secondary); margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1rem; text-align: left; }
+        .form-group label { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
+        .input-group { position: relative; }
+        .input-group svg { position: absolute; top: 50%; left: 1rem; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; width: 18px; height: 18px; }
+        .input-group input { width: 100%; padding: 0.75rem 1rem 0.75rem 3rem; border-radius: 8px; border: 1px solid #333; background: var(--surface-light); color: var(--text-color); font-size: 0.95rem; }
+        .form-group button { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background: var(--primary-color); color: white; font-weight: 600; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .separator { margin: 1.5rem 0; color: #666; font-weight: 600; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 16px; width: 90%; max-width: 450px; text-align: center; border: 1px solid var(--border-color); transform: scale(0.9); transition: transform 0.3s ease; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-content h3 { margin-bottom: 1rem; font-size: 1.25rem; }
+        .modal-content p { margin-bottom: 1.5rem; color: var(--text-secondary); line-height: 1.6; }
+        .modal-content button { padding: 0.6rem 1.5rem; border-radius: 8px; border: none; background: var(--primary-color); color: white; font-weight: 600; cursor: pointer; }
+        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1001; display: flex; flex-direction: column; gap: 0.5rem; align-items: center;}
+        .toast { background: var(--surface-light); color: var(--text-color); padding: 0.75rem 1.25rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 4px solid var(--primary-color); animation: slideUp 0.3s ease forwards, fadeOutToast 0.5s ease 3s forwards; min-width: 250px; text-align: center; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOutToast { from { opacity: 1; } to { opacity: 0; transform: translateY(20px); } }
+
+        #poll-creation-modal .modal-content { text-align: left; }
+        #poll-creation-modal input { width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #333; background: var(--surface-light); color: var(--text-color); font-size: 0.95rem; margin-bottom: 1rem; }
+        #poll-options-inputs .poll-option-input { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        #poll-options-inputs input { flex-grow: 1; margin-bottom: 0; }
+        #poll-options-inputs button { background: var(--danger-color); color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer; width: 40px; height: 40px; }
+        #add-poll-option-btn { background: var(--secondary-color); color: #121212; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer; margin-top: 0.5rem; width: 100%; }
+        #submit-poll-btn { margin-top: 1rem; width: 100%; }
+
+        header { padding: 0.75rem 1.5rem; background: var(--surface-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); }
+        #room-details { display: flex; flex-direction: column; align-items: flex-start; }
+        #room-title { font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; background: var(--surface-light); padding: 0.5rem 1rem; border-radius: 8px; }
+        #copy-room-id-btn { background: none; border: none; cursor: pointer; padding: 0.3rem; display: flex; color: var(--primary-color); }
+        #status-bar { font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; margin-top: 0.25rem; }
+        .online-indicator { width: 8px; height: 8px; background-color: var(--online-color); border-radius: 50%; box-shadow: 0 0 5px var(--online-color); }
+        #header-controls { display: flex; align-items: center; gap: 0.75rem; }
+        #sync-video-btn, #leave-room-btn, #playlist-add-btn, #create-poll-btn, #fullscreen-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        #sync-video-btn { padding: 0.5rem 1rem; font-size: 0.9rem; background: var(--secondary-color); color: #121212; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        #leave-room-btn { padding: 0.5rem 1rem; font-size: 0.9rem; background: var(--danger-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        
+        #player-wrapper { position: relative; flex-shrink: 0; background: #000; border-radius: 16px; overflow: hidden; min-height: 200px; aspect-ratio: 16/9; display: flex; /* PERBAIKAN: Menggunakan flexbox untuk centering */ }
+        #player-container { flex-grow: 1; position: relative; background: #000; }
+        #player-container iframe, #player-container video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .waiting-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); text-align: center; padding: 1rem; z-index: 10; }
+        #reaction-overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+        .flying-emoji { position: absolute; bottom: 60px; font-size: 2rem; animation: floatUp 4s ease-out forwards; }
+        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-300px); opacity: 0; } }
+        #reaction-bar { position: absolute; bottom: 0; left: 0; width: 100%; z-index: 20; display: flex; justify-content: center; gap: 1rem; padding: 0.75rem; background: linear-gradient(to top, rgba(0,0,0,0.5), transparent); }
+        .reaction-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; transition: transform 0.2s; text-shadow: 0 1px 3px #000; }
+        .reaction-btn:hover { transform: scale(1.2); }
+
+        #super-chat-overlay { position: absolute; top: 18%; left: 0; width: 100%; height: 200px; z-index: 30; pointer-events: none; overflow: visible; }
+        .super-chat-marquee { position: absolute; display: inline-block; animation: marquee 15s linear forwards; pointer-events: all; filter: drop-shadow(0 0 15px rgba(255, 199, 245, 0.7)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.5)); }
+        .super-chat-banner { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem 1.25rem 0.5rem 0.5rem; border-radius: 30px; color: white; background-color: rgba(26, 7, 51, 0.6); background-image: url('https://i.imgur.com/N1BtKrO.gif'), linear-gradient(135deg, #480d76 0%, #1f59c7 100%); background-blend-mode: lighten; background-size: cover, cover; background-position: center, center; border: 1px solid rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); position: relative; overflow: visible; min-width: 300px; max-width: 500px; }
+        .super-chat-avatar-wrapper { position: relative; width: 70px; height: 70px; flex-shrink: 0; margin-top: -0.25rem; }
+        .super-chat-avatar-frame { position: absolute; top: 50%; left: 50%; width: 210%; height: 210%; transform: translate(-50%, -50%); z-index: 2; pointer-events: none; }
+        .super-chat-banner .avatar { width: 100%; height: 100%; font-size: 1.8rem; border: none; position: relative; z-index: 1; background: none; }
+        .super-chat-content { display: flex; flex-direction: column; align-items: flex-start; padding-left: 0.5rem; flex-grow: 1; min-width: 0; }
+        .super-chat-header { position: relative; left: 30px; width: 230px; font-weight: 900; font-size: 1rem; -webkit-background-clip: text; background-clip: text; filter: brightness(1.5); text-shadow: 0 0 4px rgba(255, 255, 255, 0.5), 0 0 8px rgba(255, 215, 0, 0.5); color: #ffce1b; }
+        .super-chat-body { position: relative; left: 30px; font-size: 0.8rem; line-height: 1.4; font-weight: 600;  white-space: normal; word-wrap: break-word; margin-top: 0.25rem; }
+        .super-chat-gif { position: relative; left: 30px; max-width: 300px; max-height: 100px; object-fit: cover; border-radius: 12px; margin-top: 0.75rem; border: 2px solid rgba(255,255,255,0.3); }
+        .particle-container { position: absolute; inset: -50px; overflow: visible; pointer-events: none; z-index: -1; }
+        .particle { position: absolute; border-radius: 50%; opacity: 5; background-color: #fff; animation: particle-radiate 2.5s ease-out forwards; }
+        @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-110%); } }
+        @keyframes particle-radiate { from { opacity: 0.8; transform: scale(0.2); box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--primary-color); } to { opacity: 0; transform: scale(1); box-shadow: 0 0 20px #fff, 0 0 30px var(--primary-color), 0 0 50px var(--primary-color); } }
+        
+        #viewer-controls { padding: 0.75rem; background: #141414; border-radius: 0 0 12px 12px; display: flex; justify-content: flex-end; align-items: center; gap: 1rem; display: none; }
+        #viewer-controls.active { display: flex; }
+        #fullscreen-btn, #toggle-video-fullscreen-btn { background: var(--surface-light); color: var(--text-color); border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        #toggle-video-fullscreen-btn { display: none; }
+
+        #poll-container { position: absolute; top: 20px; left: 20px; background: rgba(30,30,30,0.8); backdrop-filter: blur(10px); border-radius: 12px; padding: 1rem; z-index: 50; width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: none; }
+        #poll-container.visible { display: block; }
+        #poll-question { font-weight: 600; margin-bottom: 1rem; }
+        .poll-option { background: var(--surface-light); margin-bottom: 0.5rem; padding: 0.75rem; border-radius: 8px; cursor: pointer; position: relative; overflow: hidden; transition: background-color 0.2s; }
+        .poll-option:hover { background: #3a3a3a; }
+        .poll-option.voted { background: var(--primary-hover); }
+        .poll-progress { position: absolute; top: 0; left: 0; height: 100%; background: var(--primary-color); opacity: 0.4; transition: width 0.3s ease; }
+        .poll-text { position: relative; }
+        .poll-votes { position: relative; float: right; font-weight: bold; }
+        #close-poll-btn { background: var(--danger-color); color: white; border:none; padding: 0.4rem 0.8rem; border-radius: 6px; margin-top: 1rem; font-size: 0.8rem; cursor: pointer; }
+
+        #host-area { display: none; flex-direction: column; gap: 1rem; }
+        #host-area.active { display: flex; }
+        #host-controls { display: flex; gap: 0.75rem; padding: 1rem; background: #141414; border-radius: 12px; align-items: center; }
+        #sub-controls { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        #playlist-controls { flex-grow: 1; display: flex; flex-direction: column; background: #141414; border-radius: 12px; padding: 1rem; }
+        #create-poll-btn { background: var(--secondary-color); color: #121212; border:none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+        .input-wrapper { position: relative; flex-grow: 1; display: flex; align-items: center; }
+        .input-wrapper svg { position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none; }
+        #host-controls input { padding: 0.75rem 1rem 0.75rem 3rem; border-radius: 8px; border: 1px solid #333; background: var(--surface-light); color: var(--text-color); font-size: 0.95rem; width: 100%; }
+        #playlist-add-btn { padding: 0.75rem; border-radius: 8px; border: none; background: var(--primary-color); color: white; font-weight: 600; cursor: pointer; }
+        .playlist-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 6px; margin-bottom: 0.5rem; background: var(--surface-light); }
+        .playlist-item.playing { background: var(--primary-color); color: white; }
+        .playlist-item-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+        .playlist-item-actions button { background: none; border: none; color: var(--text-secondary); cursor: pointer; }
+        .playlist-item.playing .playlist-item-actions button { color: white; }
+
+        #host-super-chat-area { background: #141414; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        #host-super-chat-area .input-group { display: flex; flex-direction: column; gap: 0.75rem; }
+        #host-super-chat-area input { padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #333; background: var(--surface-light); color: var(--text-color); font-size: 0.95rem; width: 100%; }
+        #send-super-chat-btn { padding: 0.75rem; border-radius: 8px; border: none; background: var(--primary-color); color: white; font-weight: 600; cursor: pointer; width: 150px; }
+
+        .tab-buttons { display: flex; border-bottom: 1px solid var(--border-color); }
+        .tab-btn { flex: 1; padding: 0.75rem; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-weight: 600; }
+        .tab-btn.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
+        #typing-indicator { padding: 0 1rem 0.5rem; font-style: italic; font-size: 0.85rem; color: var(--text-secondary); height: 20px; }
+        
+        #chat-form { display: flex; padding: 1rem; border-top: 1px solid var(--border-color); gap: 0.75rem; align-items: center; }
+        #chat-form button { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; }
+        #emoji-btn { background: transparent; color: var(--text-secondary); }
+        #emoji-btn:hover { background: var(--surface-light); color: var(--text-color); }
+        #chat-form button[type="submit"] { background: var(--primary-color); color: white; }
+        
+        .user-list-item { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s; }
+        .user-list-item:hover { background: var(--surface-light); }
+        .user-info { display: flex; align-items: center; gap: 0.75rem; flex-grow: 1; min-width: 0; }
+        .user-info span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-list-item .avatar { width: 32px; height: 32px; font-size: 0.85rem; background: none; flex-shrink: 0; }
+        .user-actions { display: flex; align-items: center; gap: 0.5rem; opacity: 0; transition: opacity 0.2s; }
+        .user-list-item:hover .user-actions { opacity: 1; }
+        .make-host-btn, .kick-btn { background: var(--surface-light); color: var(--text-color); border: none; border-radius: 6px; padding: 0.25rem 0.5rem; font-size: 0.75rem; cursor: pointer; }
+        .kick-btn { background-color: var(--danger-color); color: white; }
+
+        .chat-message { display: flex; gap: 0.75rem; max-width: 90%; align-items: flex-end; }
+        .chat-message.system { display: none; }
+        .chat-message.mine { align-self: flex-end; flex-direction: row-reverse; }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; flex-shrink: 0; text-transform: uppercase; font-size: 0.9rem; background: none; }
+        .message-content { display: flex; flex-direction: column; align-items: flex-start; }
+        .chat-message.mine .message-content { align-items: flex-end; }
+        .message-info { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
+        .username { font-weight: 600; font-size: 0.9rem; }
+        .badge.host { display: inline-flex; align-items: center; justify-content: center; margin-left: 0.4rem; color: var(--secondary-color); }
+        .badge.host svg { width: 14px; height: 14px; }
+        .message-bubble { padding: 0.6rem 1rem; border-radius: 18px; background: var(--surface-light); line-height: 1.5; font-size: 0.95rem; word-break: break-word; }
+        .chat-message:not(.mine) .message-bubble { border-bottom-left-radius: 5px; }
+        .chat-message.mine .message-bubble { background: var(--primary-color); color: white; border-bottom-right-radius: 5px; }
+        .timestamp { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.25rem; }
+        .chat-message.mine .timestamp { align-self: flex-end; }
+        
+        .chat-message.host-message:not(.mine) .message-bubble { background: var(--secondary-color); color: #121212; font-weight: 500; }
+        .chat-message.mine.host-message .message-bubble { background: var(--secondary-color); color: #121212; font-weight: 500; }
+
+        #video-chat-panel { position: fixed; bottom: 20px; left: 20px; width: 260px; background-color: rgba(30, 30, 30, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 999; display: none; flex-direction: column; transition: transform 0.3s ease, opacity 0.3s ease; color: var(--text-color); }
+        #video-chat-panel.visible { display: flex; }
+        #video-chat-panel.fullscreen-mode { position: absolute; bottom: 70px; left: 20px; z-index: 25; }
+        #video-chat-header { padding: 0.5rem 0.75rem; background-color: rgba(44, 44, 44, 0.5); display: flex; justify-content: space-between; align-items: center; cursor: move; border-radius: 12px 12px 0 0; border-bottom: 1px solid var(--border-color); }
+        #video-chat-header h4 { font-size: 0.9rem; font-weight: 600; }
+        #toggle-video-panel-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.25rem; display: flex; align-items: center; }
+        #video-chat-content { padding: 0.75rem; max-height: 40vh; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; transition: all 0.3s ease; }
+        #video-chat-panel.collapsed #video-chat-content { max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; }
+        .video-wrapper { position: relative; background-color: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 4 / 3; }
+        .video-wrapper video { width: 100%; height: 100%; object-fit: cover; }
+        .video-wrapper.local-video-wrapper { grid-column: 1 / -1; }
+        .video-wrapper .local-video { transform: scaleX(-1); }
+        .video-wrapper .video-username { position: absolute; bottom: 5px; left: 8px; background: rgba(0,0,0,0.6); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+        #local-video-controls { position: absolute; bottom: 5px; right: 5px; display: flex; gap: 5px; }
+        #local-video-controls button { background: rgba(255,255,255,0.2); backdrop-filter: blur(2px); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        #local-video-controls button.off { background: var(--danger-color); }
+
+        @media (max-width: 1024px) { 
+            body { height: auto; overflow: auto; } 
+            #room-page { height: auto; } 
+            #main-container { flex-direction: column; overflow: visible; } 
+            #right-panel { 
+                min-height: 500px; 
+                max-height: 500px; 
+                min-width: unset; 
+                max-width: none; 
+                width: 100%; 
+            } 
+            #video-chat-panel { width: 220px; } 
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            #emoji-picker-container {
+                bottom: auto;
+                top: calc(100% + 8px);
+            }
+            emoji-picker {
+                height: 35vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Landing Page HTML (tidak berubah) -->
+    <div id="landing-page" class="page active">
+        <main>
+            <div class="form-container">
+                <h1>NOBAR 🍿</h1>
+                <p>Ver. 20.1</p>
+                <div class="form-group"><label for="username-input">Username</label><div class="input-group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.095a1.23 1.23 0 00.41-1.412A9.99 9.99 0 0010 12a9.99 9.99 0 00-6.535 2.493z"></path></svg><input type="text" id="username-input" placeholder="Masukkan username" maxlength="15"></div></div>
+                <div class="form-group"><label for="create-password-input">Password Room (Opsional)</label><div class="input-group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"></path></svg><input type="password" id="create-password-input" placeholder="Masukkan Password" maxlength="50"></div></div>
+                <div class="form-group"><button id="create-room-btn">Buat Room Baru</button></div>
+                <div class="separator">ATAU</div>
+                <div class="form-group"><label for="room-id-input">ID Room</label><div class="input-group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z"></path><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z"></path></svg><input type="text" id="room-id-input" placeholder="Masukkan ID" maxlength="20"></div></div>
+                <div class="form-group"><label for="join-password-input">Password Room</label><div class="input-group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"></path></svg><input type="password" id="join-password-input" placeholder="Masukkan Password" maxlength="50"></div></div>
+                <div class="form-group"><button id="join-room-btn">Gabung Room</button></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Room Page HTML (tidak berubah) -->
+    <div id="room-page" class="page">
+        <header>
+            <div id="room-details"><div id="room-title"></div><div id="status-bar"></div></div>
+            <div id="header-controls"><button id="sync-video-btn" title="Sinkronkan video dengan host" style="display: none;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg> Sync</button><button id="leave-room-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.5 10c0 .276-.224.5-.5.5s-.5-.224-.5-.5V6h-1v4c0 .828.672 1.5 1.5 1.5s1.5-.672 1.5-1.5V6h-1v4z"/><path d="M2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2zm12 1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12z"/></svg> Keluar</button></div>
+        </header>
+        
+        <main id="main-container">
+            <section id="left-panel">
+                <div id="player-wrapper">
+                    <div id="player-container">
+                        <!-- PERBAIKAN: Overlay dipastikan ada dari awal -->
+                        <div class="waiting-overlay" style="display: none;"><h3>🍿 Menunggu Host memulai video...</h3></div>
+                        <div id="reaction-overlay"></div>
+                        <div id="super-chat-overlay"></div>
+                    </div>
+                    <div id="reaction-bar"><button class="reaction-btn" data-emoji="❤️">❤️</button><button class="reaction-btn" data-emoji="👍">👍</button><button class="reaction-btn" data-emoji="👎">👎</button><button class="reaction-btn" data-emoji="💩">💩</button><button class="reaction-btn" data-emoji="🔥">🔥</button><button class="reaction-btn" data-emoji="😂">😂</button><button class="reaction-btn" data-emoji="😭">😭</button></div>
+                </div>
+                <div id="viewer-controls">
+                    <button id="fullscreen-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/></svg> Mode Bioskop</button>
+                </div>
+                <div id="host-area">
+                    <div id="host-controls"><div class="input-wrapper" title="Tempel link video .mp4 atau .webm di sini"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path></svg><input type="text" id="videoUrl" placeholder="Masukkan Link Video" maxlength="2048"></div><button id="playlist-add-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg> Tambahkan</button></div>
+                    <div id="sub-controls"><div id="playlist-controls"><h3>🎬 Playlist</h3><div id="playlist-container"></div></div><button id="create-poll-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0v-1zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0V7zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0V9z"/><path d="M4 1.5H3.5v13H4v-13zM1 14h14V2H1v12zm1-1V3h12v10H2z"/></svg> Buat Polling</button></div>
+                    <div id="host-super-chat-area"><h3>⭐ Super Chat</h3><div class="input-group"><input type="text" id="host-announcement-input" placeholder="Ketik pesan super..." maxlength="150"><input type="text" id="host-gif-input" placeholder="URL GIF (Opsional)" maxlength="2048"><button id="send-super-chat-btn">Kirim Super Chat</button></div></div>
+                </div>
+            </section>
+            <aside id="right-panel">
+                <div class="tab-buttons"><button class="tab-btn active" data-tab="chat-panel">Live Chat</button><button class="tab-btn" data-tab="users-panel">Penonton</button></div>
+                <div id="chat-panel" class="tab-content active">
+                    <div id="chat-box"></div>
+                    <div id="typing-indicator"></div>
+                    <div id="chat-input-area">
+                        <div id="emoji-picker-container"><emoji-picker class="dark"></emoji-picker></div>
+                        <form id="chat-form">
+                            <input type="text" id="chat-input" placeholder="Ketik pesan..." autocomplete="off" maxlength="300">
+                            <button type="button" id="emoji-btn" title="Pilih emoji">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M4.285 9.567a.5.5 0 0 1 .683.183A3.498 3.498 0 0 0 8 11.5a3.498 3.498 0 0 0 3.032-1.75.5.5 0 1 1 .866.5A4.498 4.498 0 0 1 8 12.5a4.498 4.498 0 0 1-3.898-2.25.5.5 0 0 1 .183-.683zM7 6.5C7 7.328 6.552 8 6 8s-1-.672-1-1.5S5.448 5 6 5s1 .672 1 1.5zm4 0c0 .728-.448 1.5-1 1.5s-1-.772-1-1.5S9.448 5 10 5s1 .672 1 1.5z"/></svg>
+                            </button>
+                            <button type="submit" title="Kirim">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"></path></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="users-panel" class="tab-content"><div id="users-panel-content"></div></div>
+            </aside>
+        </main>
+        <div id="poll-container"><h4 id="poll-question"></h4><div id="poll-options"></div><button id="close-poll-btn" style="display:none;">Tutup Polling</button></div>
+        <footer id="main-footer">NOBAR 🍿 ver.20.1 (Beta release) - ARH 🪄</footer>
+    </div>
+    
+    <!-- Other HTML (Modals, Video Chat Panel, etc. - tidak berubah) -->
+    <div id="video-chat-panel">
+        <div id="video-chat-header"><h4>Video Chat</h4><button id="toggle-video-panel-btn" title="Sembunyikan/Tampilkan Panel"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg></button></div>
+        <div id="video-chat-content"></div>
+    </div>
+    <div id="custom-modal" class="modal-overlay"><div class="modal-content"><h3 id="modal-title">❗Pemberitahuan</h3><p id="modal-message"></p><button id="modal-close-btn">OK</button></div></div>
+    <div id="poll-creation-modal" class="modal-overlay"><div class="modal-content"><h3>Buat Polling Baru</h3><input type="text" id="poll-question-input" placeholder="Tulis pertanyaan polling di sini..." maxlength="150"><div id="poll-options-inputs"><div class="poll-option-input"><input type="text" placeholder="Pilihan 1" maxlength="50"></div><div class="poll-option-input"><input type="text" placeholder="Pilihan 2" maxlength="50"></div></div><button id="add-poll-option-btn">Tambah Pilihan</button><button id="submit-poll-btn">Buat</button></div></div>
+    <div id="toast-container"></div>
+    
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+    const App = {
+        ws: null, player: null, ytPlayer: null, roomId: null, username: null, userId: null, userRole: null, isSyncing: false,
+        isActionPending: false,
+        elements: {},
+        audioContext: null,
+        typingTimeout: null,
+        syncInterval: null,
+        localStream: null,
+        peerConnections: {},
+        rtcConfig: { iceServers: [ { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' } ] },
+
+        init() {
+            this.cacheDOMElements();
+            this.bindEvents();
+            this.checkSession();
+        },
+
+        cacheDOMElements() {
+            this.elements = {
+                pages: { landing: document.getElementById('landing-page'), room: document.getElementById('room-page') },
+                usernameInput: document.getElementById('username-input'), createPasswordInput: document.getElementById('create-password-input'), createRoomBtn: document.getElementById('create-room-btn'),
+                roomIdInput: document.getElementById('room-id-input'), joinPasswordInput: document.getElementById('join-password-input'), joinRoomBtn: document.getElementById('join-room-btn'),
+                roomDetails: document.getElementById('room-details'), roomTitle: document.getElementById('room-title'), statusBar: document.getElementById('status-bar'),
+                playerWrapper: document.getElementById('player-wrapper'), playerContainer: document.getElementById('player-container'),
+                // PERBAIKAN: Ambil referensi ke overlay dari awal
+                waitingOverlay: document.querySelector('.waiting-overlay'),
+                reactionOverlay: document.getElementById('reaction-overlay'), 
+                reactionBar: document.getElementById('reaction-bar'),
+                hostArea: document.getElementById('host-area'), videoUrlInput: document.getElementById('videoUrl'), playlistAddBtn: document.getElementById('playlist-add-btn'), playlistContainer: document.getElementById('playlist-container'), createPollBtn: document.getElementById('create-poll-btn'),
+                rightPanel: document.getElementById('right-panel'), tabButtons: document.querySelector('.tab-buttons'),
+                chatPanel: document.getElementById('chat-panel'), chatBox: document.getElementById('chat-box'), typingIndicator: document.getElementById('typing-indicator'), chatForm: document.getElementById('chat-form'), chatInput: document.getElementById('chat-input'),
+                usersPanel: document.getElementById('users-panel'), usersPanelContent: document.getElementById('users-panel-content'),
+                leaveRoomBtn: document.getElementById('leave-room-btn'), footer: document.getElementById('main-footer'),
+                modal: document.getElementById('custom-modal'), modalTitle: document.getElementById('modal-title'), modalMessage: document.getElementById('modal-message'), modalCloseBtn: document.getElementById('modal-close-btn'),
+                pollCreationModal: document.getElementById('poll-creation-modal'), pollQuestionInput: document.getElementById('poll-question-input'), pollOptionsInputs: document.getElementById('poll-options-inputs'), addPollOptionBtn: document.getElementById('add-poll-option-btn'), submitPollBtn: document.getElementById('submit-poll-btn'),
+                toastContainer: document.getElementById('toast-container'),
+                pollContainer: document.getElementById('poll-container'), pollQuestion: document.getElementById('poll-question'), pollOptions: document.getElementById('poll-options'), closePollBtn: document.getElementById('close-poll-btn'),
+                syncVideoBtn: document.getElementById('sync-video-btn'),
+                viewerControls: document.getElementById('viewer-controls'),
+                fullscreenBtn: document.getElementById('fullscreen-btn'),
+                superChatOverlay: document.getElementById('super-chat-overlay'),
+                hostAnnouncementInput: document.getElementById('host-announcement-input'),
+                hostGifInput: document.getElementById('host-gif-input'),
+                sendSuperChatBtn: document.getElementById('send-super-chat-btn'),
+                videoChatPanel: document.getElementById('video-chat-panel'),
+                videoChatHeader: document.getElementById('video-chat-header'),
+                videoChatContent: document.getElementById('video-chat-content'),
+                toggleVideoPanelBtn: document.getElementById('toggle-video-panel-btn'),
+                emojiBtn: document.getElementById('emoji-btn'),
+                emojiPickerContainer: document.getElementById('emoji-picker-container'),
+                emojiPicker: document.querySelector('emoji-picker'),
+            };
+        },
+
+        // bindEvents() tidak berubah
+        bindEvents() {
+            this.elements.createRoomBtn.onclick = () => this.createRoom();
+            this.elements.joinRoomBtn.onclick = () => this.joinRoom();
+            this.elements.leaveRoomBtn.onclick = () => this.leaveRoom();
+            this.elements.chatForm.onsubmit = (e) => this.sendChatMessage(e);
+            this.elements.playlistAddBtn.onclick = () => this.addVideoToPlaylist();
+            this.elements.reactionBar.querySelectorAll('.reaction-btn').forEach(btn => btn.onclick = () => this.sendReaction(btn.dataset.emoji));
+            this.elements.chatInput.onkeydown = () => this.handleTyping();
+            this.elements.chatInput.onblur = () => this.stopTypingIndicator();
+            this.elements.tabButtons.onclick = (e) => { if (e.target.classList.contains('tab-btn')) this.switchTab(e.target.dataset.tab); };
+            this.elements.modalCloseBtn.onclick = () => this.showAlert(null);
+            this.elements.modal.onclick = (e) => { if (e.target === this.elements.modal) this.showAlert(null); };
+            this.elements.createPollBtn.onclick = () => this.showPollCreationModal(true);
+            this.elements.closePollBtn.onclick = () => this.sendMessage('endPoll');
+            this.elements.addPollOptionBtn.onclick = () => this.addPollOptionInput();
+            this.elements.submitPollBtn.onclick = () => this.submitPoll();
+            this.elements.pollCreationModal.onclick = (e) => { if (e.target === this.elements.pollCreationModal) this.showPollCreationModal(false); };
+            this.elements.syncVideoBtn.onclick = () => this.sendMessage('requestSync');
+            this.elements.fullscreenBtn.onclick = () => this.toggleFullscreen();
+            this.elements.sendSuperChatBtn.onclick = () => this.sendHostAnnouncement();
+            this.elements.toggleVideoPanelBtn.onclick = () => this.elements.videoChatPanel.classList.toggle('collapsed');
+            this.makeDraggable(this.elements.videoChatPanel, this.elements.videoChatHeader);
+            document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
+
+            this.elements.emojiBtn.onclick = () => this.toggleEmojiPicker();
+            this.elements.emojiPicker.addEventListener('emoji-click', event => {
+                this.insertEmoji(event.detail.unicode);
+                this.elements.emojiPickerContainer.classList.remove('visible');
+            });
+            document.addEventListener('click', e => {
+                if (!this.elements.emojiPickerContainer.contains(e.target) && !this.elements.emojiBtn.contains(e.target)) {
+                    this.elements.emojiPickerContainer.classList.remove('visible');
+                }
+            });
+        },
+        
+        // Fungsi lainnya (toggleEmojiPicker, insertEmoji, makeDraggable, media handling, dll) tidak berubah
+        toggleEmojiPicker() { this.elements.emojiPickerContainer.classList.toggle('visible'); },
+        insertEmoji(emoji) { const input = this.elements.chatInput; const start = input.selectionStart; const end = input.selectionEnd; const text = input.value; const before = text.substring(0, start); const after = text.substring(end, text.length); input.value = (before + emoji + after); input.selectionStart = input.selectionEnd = start + emoji.length; input.focus(); },
+        makeDraggable(panel, header) { let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0; header.onmousedown = dragMouseDown; function dragMouseDown(e) { e = e || window.event; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; } function elementDrag(e) { e = e || window.event; e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; panel.style.top = (panel.offsetTop - pos2) + "px"; panel.style.left = (panel.offsetLeft - pos1) + "px"; } function closeDragElement() { document.onmouseup = null; document.onmousemove = null; } },
+        async startLocalMedia() { try { this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); this.elements.videoChatPanel.classList.add('visible'); this.updateVideoGrid(); } catch (err) { console.error("Gagal mendapatkan akses media:", err); this.showAlert("Gagal mengakses kamera/mikrofon. Fitur video chat tidak akan aktif. Pastikan Anda memberikan izin di browser."); this.elements.videoChatPanel.classList.remove('visible'); } },
+        stopLocalMedia() { if (this.localStream) { this.localStream.getTracks().forEach(track => track.stop()); this.localStream = null; } Object.keys(this.peerConnections).forEach(peerId => this.closePeerConnection(peerId)); this.elements.videoChatPanel.classList.remove('visible'); },
+        toggleTrack(kind) { if (!this.localStream) return; const track = this.localStream.getTracks().find(t => t.kind === kind); if (track) { track.enabled = !track.enabled; const btn = document.getElementById(`toggle-${kind}-btn`); if(btn) { btn.classList.toggle('off', !track.enabled); } } },
+        createPeerConnection(peerId) { const pc = new RTCPeerConnection(this.rtcConfig); pc.onicecandidate = event => { if (event.candidate) this.sendMessage('webrtc-candidate', { targetUserId: peerId, candidate: event.candidate }); }; pc.ontrack = event => { const videoEl = document.getElementById(`video-${peerId}`); if (videoEl && event.streams && event.streams[0]) videoEl.srcObject = event.streams[0]; }; if (this.localStream) { this.localStream.getTracks().forEach(track => pc.addTrack(track, this.localStream)); } this.peerConnections[peerId] = pc; return pc; },
+        closePeerConnection(peerId) { if (this.peerConnections[peerId]) { this.peerConnections[peerId].close(); delete this.peerConnections[peerId]; } const videoWrapper = document.getElementById(`video-wrapper-${peerId}`); if (videoWrapper) videoWrapper.remove(); },
+        async handleOffer(fromUserId, offer) { if (this.peerConnections[fromUserId]) return; const pc = this.createPeerConnection(fromUserId); await pc.setRemoteDescription(new RTCSessionDescription(offer)); const answer = await pc.createAnswer(); await pc.setLocalDescription(answer); this.sendMessage('webrtc-answer', { targetUserId: fromUserId, answer }); },
+        async handleAnswer(fromUserId, answer) { const pc = this.peerConnections[fromUserId]; if (pc && pc.signalingState !== 'stable') await pc.setRemoteDescription(new RTCSessionDescription(answer)); },
+        async handleCandidate(fromUserId, candidate) { const pc = this.peerConnections[fromUserId]; if (pc) { try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) { console.error('Error adding ICE candidate', e); } } },
+        async initiatePeerConnection(peerId) { if (!this.localStream || this.peerConnections[peerId]) return; const pc = this.createPeerConnection(peerId); const offer = await pc.createOffer(); await pc.setLocalDescription(offer); this.sendMessage('webrtc-offer', { targetUserId: peerId, offer }); },
+        async toggleFullscreen() { try { if (!document.fullscreenElement) { await this.elements.playerWrapper.requestFullscreen(); if (screen.orientation && typeof screen.orientation.lock === 'function') { await screen.orientation.lock('landscape').catch(() => {}); } } else { if (screen.orientation && typeof screen.orientation.unlock === 'function') { screen.orientation.unlock(); } await document.exitFullscreen(); } } catch (err) { console.error("Fullscreen/Landscape Error:", err); this.showAlert("Mode bioskop tidak dapat diaktifkan di perangkat atau browser ini."); } },
+        handleFullscreenChange() {
+            const isFullscreen = !!document.fullscreenElement;
+            const panel = this.elements.videoChatPanel;
+            const controls = this.elements.viewerControls;
+            
+            // Hapus referensi ke tombol toggle karena tidak dipakai lagi
+            let toggleBtn = document.getElementById('toggle-video-fullscreen-btn');
+            if(toggleBtn) toggleBtn.remove();
+
+            if (isFullscreen) {
+                // Saat masuk fullscreen:
+                // 1. Pindahkan panel ke dalam player wrapper agar ikut fullscreen
+                this.elements.playerWrapper.appendChild(panel);
+                // 2. Tambahkan class untuk penanda (jika perlu styling khusus)
+                panel.classList.add('fullscreen-mode');
+                // 3. SEMBUNYIKAN panel video chat
+                panel.style.display = 'none';
+            } else {
+                // Saat keluar dari fullscreen:
+                // 1. Kembalikan panel ke body utama
+                document.body.appendChild(panel);
+                // 2. Hapus class fullscreen-mode
+                panel.classList.remove('fullscreen-mode');
+                // 3. Reset posisi dan pastikan panel terlihat kembali jika memang seharusnya terlihat
+                panel.style.top = 'auto';
+                panel.style.left = '20px';
+                panel.style.bottom = '20px';
+                panel.style.display = ''; // Hapus inline style 'none' agar kembali ke aturan CSS awal
+            }
+        },
+        async connectAndJoin(joinPayload) { if (this.ws && this.ws.readyState === WebSocket.OPEN) { this.sendMessage('joinRoom', joinPayload); } else { const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'; this.ws = new WebSocket(`${protocol}//${window.location.host}`); this.ws.onopen = () => this.sendMessage('joinRoom', joinPayload); this.ws.onmessage = (event) => this.handleServerMessage(event); this.ws.onclose = () => { if (this.userRole) this.showAlert("❗ Koneksi ke server terputus. Silakan segarkan halaman", "Koneksi Terputus"); this.stopLocalMedia(); }; this.ws.onerror = (err) => { if (!this.userRole) this.showAlert("Tidak dapat terhubung ke server. Pastikan server berjalan dan coba lagi."); }; } },
+        leaveRoom() { this.sendMessage('leaveRoom'); localStorage.removeItem('watch-party-session'); this.stopLocalMedia(); window.history.replaceState({}, document.title, window.location.pathname); setTimeout(() => window.location.reload(), 100); },
+
+        handleServerMessage(event) {
+            const data = JSON.parse(event.data);
+            switch(data.type) {
+                case 'joinedRoom': 
+                    this.roomId = data.payload.roomId; 
+                    this.switchToPage('room'); 
+                    this.startLocalMedia();
+                    this.elements.roomTitle.innerHTML = `<span>${this.roomId}</span><button id="copy-room-id-btn" title="Salin ID Room"></button>`; 
+                    this.updateCopyButton(false); 
+                    document.getElementById('copy-room-id-btn').onclick = () => this.copyRoomId(); 
+                    window.history.replaceState({}, document.title, `?room=${this.roomId}`); 
+                    break;
+                case 'error': this.showAlert(data.payload.message, "❗ Terjadi Kesalahan"); if (data.payload.reconnect) { localStorage.removeItem('watch-party-session'); window.history.replaceState({}, document.title, window.location.pathname); } break;
+                case 'assignIdentity': this.userId = data.payload.userId; this.userRole = data.payload.role; localStorage.setItem('watch-party-session', JSON.stringify({ roomId: this.roomId, username: this.username, userId: this.userId })); this.elements.hostArea.classList.toggle('active', this.userRole === 'host'); this.elements.viewerControls.classList.toggle('active', this.userRole !== 'host'); this.elements.syncVideoBtn.style.display = this.userRole === 'host' ? 'none' : 'inline-flex'; break;
+                case 'roomState': this.updatePlaylist(data.payload.playlist || []); if (data.payload.videoState) this.loadVideo(data.payload.videoState); else if (this.userRole !== 'host') this.showWaitingScreen(); this.updateUsers(data.payload.users); this.renderPoll(data.payload.activePoll); break;
+                case 'chatHistory':
+                    this.elements.chatBox.innerHTML = '';
+                    if (data.payload.length === 0) {
+                        this.elements.chatBox.innerHTML = `<div id="no-chat-placeholder" style="text-align: center; color: var(--text-secondary); margin: auto; font-style: italic;">Belum ada riwayat chat. <br> Mulailah percakapan!</div>`;
+                    } else {
+                        data.payload.forEach(msg => this.displayChatMessage(msg, false));
+                    }
+                    break;
+                case 'updateUsers': this.updateUsers(data.payload.users); break;
+                case 'updatePlaylist': this.updatePlaylist(data.payload); break;
+                case 'loadVideo': this.loadVideo(data.payload); break;
+                case 'sync': this.handleSync(data.payload); break;
+                case 'chatMessage': if (data.payload.system) { this.showToast(data.payload.text); } else { this.displayChatMessage(data.payload, true); } break;
+                case 'systemToast': this.showToast(data.payload.message); break;
+                case 'typingUpdate': this.updateTypingIndicator(data.payload.typingUsers); break;
+                case 'showReaction': this.showReaction(data.payload.emoji); break;
+                case 'roleAssign': this.userRole = data.payload.role; this.elements.hostArea.classList.toggle('active', this.userRole === 'host'); this.elements.viewerControls.classList.toggle('active', this.userRole !== 'host'); this.elements.syncVideoBtn.style.display = this.userRole === 'host' ? 'none' : 'inline-flex'; this.updateUsers(data.payload.users); break;
+                case 'pollUpdate': this.renderPoll(data.payload); break;
+                case 'hostAnnouncement': this.displaySuperChat(data.payload); break;
+                case 'kicked':
+                    this.showAlert(data.payload.message, "Anda Dikeluarkan");
+                    this.userRole = null; 
+                    this.ws.onclose = null; 
+                    if (this.ws && this.ws.readyState !== WebSocket.CLOSED) { this.ws.close(); }
+                    this.stopLocalMedia();
+                    localStorage.removeItem('watch-party-session');
+                    window.history.replaceState({}, document.title, '/');
+                    this.elements.modalCloseBtn.textContent = "Kembali ke Awal";
+                    this.elements.modalCloseBtn.onclick = () => { window.location.href = '/'; };
+                    break;
+                case 'webrtc-offer': this.handleOffer(data.payload.fromUserId, data.payload.offer); break;
+                case 'webrtc-answer': this.handleAnswer(data.payload.fromUserId, data.payload.answer); break;
+                case 'webrtc-candidate': this.handleCandidate(data.payload.fromUserId, data.payload.candidate); break;
+                case 'user-left-for-webrtc': this.closePeerConnection(data.payload.userId); break;
+            }
+        },
+        
+        updateVideoGrid(users = []) {
+            if (!this.elements.videoChatPanel.classList.contains('visible')) return;
+            const content = this.elements.videoChatContent;
+            content.innerHTML = '';
+            if (this.localStream) {
+                const localWrapper = document.createElement('div');
+                localWrapper.className = 'video-wrapper local-video-wrapper';
+                localWrapper.id = `video-wrapper-${this.userId}`;
+                localWrapper.innerHTML = `<video id="local-video" class="local-video" autoplay muted playsinline></video><div class="video-username">Anda</div><div id="local-video-controls"><button id="toggle-audio-btn" title="Mute/Unmute Mic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"/><path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/></svg></button><button id="toggle-video-btn" title="On/Off Camera"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.5 2.5a.5.5 0 0 0-1 0L12 5.5V4.5a.5.5 0 0 0-1 0v2.5a.5.5 0 0 0 .5.5h2.5a.5.5 0 0 0 0-1H12.5L15 4l.5-.5zM1 4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1V4zm1 0v1h6V4H2zm-1 3v6h10V7H1z"/></svg></button></div>`;
+                content.appendChild(localWrapper);
+                document.getElementById('local-video').srcObject = this.localStream;
+                document.getElementById('toggle-audio-btn').onclick = () => this.toggleTrack('audio');
+                document.getElementById('toggle-video-btn').onclick = () => this.toggleTrack('video');
+            }
+            users.forEach(user => {
+                if (user.id === this.userId) return;
+                const remoteWrapper = document.createElement('div');
+                remoteWrapper.className = 'video-wrapper';
+                remoteWrapper.id = `video-wrapper-${user.id}`;
+                remoteWrapper.innerHTML = `<video id="video-${user.id}" autoplay playsinline></video><div class="video-username">${user.username}</div>`;
+                content.appendChild(remoteWrapper);
+            });
+        },
+
+        updateUsers(users) {
+            this.elements.statusBar.innerHTML = `<span class="online-indicator"></span><span>${users.length} orang online</span>`;
+            this.elements.usersPanelContent.innerHTML = '';
+            users.forEach((user, index) => {
+                const userEl = document.createElement('div');
+                userEl.className = 'user-list-item';
+                const numberEl = document.createElement('div');
+                numberEl.className = 'user-number';
+                numberEl.textContent = `${index + 1}.`;
+                userEl.appendChild(numberEl);
+                let badge = user.isHost ? ' (Host)' : '';
+                const userInfo = document.createElement('div');
+                userInfo.className = 'user-info';
+                const avatar = document.createElement('img');
+                avatar.className = 'avatar';
+                avatar.src = `https://api.dicebear.com/8.x/fun-emoji/svg?seed=${encodeURIComponent(user.username)}`;
+                avatar.alt = user.username;
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = `${user.username}${badge}`;
+                userInfo.appendChild(avatar);
+                userInfo.appendChild(nameSpan);
+                userEl.appendChild(userInfo);
+                if (this.userRole === 'host' && user.id !== this.userId) {
+                    const actionsContainer = document.createElement('div');
+                    actionsContainer.className = 'user-actions';
+                    actionsContainer.innerHTML = `<button class="make-host-btn" data-userid="${user.id}" title="Jadikan Host">👑</button><button class="kick-btn" data-userid="${user.id}" title="Keluarkan dari Room">✖️</button>`;
+                    userEl.appendChild(actionsContainer);
+                }
+                this.elements.usersPanelContent.appendChild(userEl);
+            });
+            this.elements.usersPanelContent.querySelectorAll('.make-host-btn').forEach(btn => { btn.onclick = () => this.sendMessage('delegateHost', { targetUserId: btn.dataset.userid }); });
+            this.elements.usersPanelContent.querySelectorAll('.kick-btn').forEach(btn => { btn.onclick = () => this.sendMessage('kickUser', { targetUserId: btn.dataset.userid }); });
+            this.updateVideoGrid(users);
+            const connectedUserIds = users.map(u => u.id);
+            Object.keys(this.peerConnections).forEach(peerId => { if (!connectedUserIds.includes(peerId)) this.closePeerConnection(peerId); });
+            users.forEach(user => {
+    // ATURAN BARU UNTUK MENGHINDARI "GLARE" / RACE CONDITION
+    // Hanya inisiasi koneksi jika ID kita "lebih besar" dari ID user lain.
+    // Ini memastikan hanya satu dari dua user yang akan memulai koneksi.
+    if (user.id !== this.userId && !this.peerConnections[user.id] && this.userId > user.id) {
+        this.initiatePeerConnection(user.id);
+    }
+});
+        },
+        
+        throttleAction(action, delay = 1000) { if (this.isActionPending) { this.showToast("Tunggu sebentar sebelum melakukan aksi lagi."); return; } this.isActionPending = true; action(); setTimeout(() => { this.isActionPending = false; }, delay); },
+        showAlert(message, title = "❗ Pemberitahuan") { if (message) { this.elements.modalTitle.textContent = title; this.elements.modalMessage.textContent = message; this.elements.modal.classList.add('visible'); } else { this.elements.modal.classList.remove('visible'); } },
+        showToast(message) { const toast = document.createElement('div'); toast.className = 'toast'; toast.textContent = message; this.elements.toastContainer.appendChild(toast); setTimeout(() => toast.remove(), 3500); },
+        initAudio() { if (this.audioContext || !window.AudioContext) return; this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); if (this.audioContext.state === 'suspended') this.audioContext.resume(); },
+        playChatSound() { if (!this.audioContext) this.initAudio(); const oscillator = this.audioContext.createOscillator(); const gainNode = this.audioContext.createGain(); oscillator.connect(gainNode); gainNode.connect(this.audioContext.destination); oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(880, this.audioContext.currentTime); gainNode.gain.setValueAtTime(0, this.audioContext.currentTime); gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.01); gainNode.gain.exponentialRampToValueAtTime(0.0001, this.audioContext.currentTime + 0.1); oscillator.start(this.audioContext.currentTime); oscillator.stop(this.audioContext.currentTime + 0.1); },
+        checkSession() { const urlParams = new URLSearchParams(window.location.search); const roomIdFromUrl = urlParams.get('room'); const session = JSON.parse(localStorage.getItem('watch-party-session')); if (roomIdFromUrl && session?.userId && session?.username) { this.roomId = roomIdFromUrl; this.username = session.username; this.userId = session.userId; this.connectAndJoin({ username: this.username, roomId: this.roomId, rejoin: true, userId: this.userId }); } else { window.history.replaceState({}, document.title, window.location.pathname); } },
+        createRoom() { const username = this.elements.usernameInput.value.trim(); if (!username) { this.showAlert('Username wajib diisi!'); return; } const password = this.elements.createPasswordInput.value; this.username = username; this.connectAndJoin({ username, password, create: true }); },
+        joinRoom() { const roomId = this.elements.roomIdInput.value.trim(); if (!roomId) { this.showAlert('ID Room tidak boleh kosong!'); return; } let username = this.elements.usernameInput.value.trim(); if (!username) { username = `user${Math.floor(100000 + Math.random() * 900000)}`; } const password = this.elements.joinPasswordInput.value; this.username = username; this.roomId = roomId; this.connectAndJoin({ username, roomId, password }); },
+        switchToPage(pageName) { Object.values(this.elements.pages).forEach(p => p.classList.remove('active')); this.elements.pages[pageName].classList.add('active'); },
+        
+        // PERBAIKAN: Fungsi showWaitingScreen
+        showWaitingScreen() {
+            this.elements.playerContainer.innerHTML = ''; // Hapus semua video/iframe
+            // Tambahkan kembali overlay yang penting
+            this.elements.playerContainer.appendChild(this.elements.waitingOverlay);
+            this.elements.playerContainer.appendChild(this.elements.reactionOverlay);
+            this.elements.playerContainer.appendChild(this.elements.superChatOverlay);
+            this.elements.waitingOverlay.style.display = 'flex'; // Tampilkan pesan menunggu
+        },
+
+        // PERBAIKAN: Fungsi loadVideo
+        loadVideo(videoInfo) {
+            clearInterval(this.syncInterval);
+            this.ytPlayer = null;
+            this.player = null;
+            this.elements.playerContainer.innerHTML = ''; // Hapus semua
+            // Tambahkan kembali overlay yang penting
+            this.elements.playerContainer.appendChild(this.elements.reactionOverlay);
+            this.elements.playerContainer.appendChild(this.elements.superChatOverlay);
+            
+            this.elements.waitingOverlay.style.display = 'none'; // Sembunyikan pesan menunggu
+            const isHost = this.userRole === 'host';
+
+            if (videoInfo.videoType === 'youtube') {
+                const playerDiv = document.createElement('div');
+                playerDiv.id = 'youtube-player';
+                this.elements.playerContainer.prepend(playerDiv);
+                this.ytPlayer = new YT.Player('youtube-player', { height: '100%', width: '100%', videoId: videoInfo.videoId, playerVars: { 'autoplay': 1, 'controls': isHost ? 1 : 0, 'rel': 0, 'showinfo': 0, 'iv_load_policy': 3, 'modestbranding': 1, 'disablekb': isHost ? 0 : 1, 'origin': window.location.origin }, events: { 'onReady': (event) => { if (videoInfo.time) { event.target.seekTo(videoInfo.time, true); } if (isHost) { event.target.playVideo(); } }, 'onStateChange': (event) => { if (!isHost || this.isSyncing) return; if (event.data === YT.PlayerState.PLAYING) this.syncAction('play'); else if (event.data === YT.PlayerState.PAUSED) this.syncAction('pause'); } } });
+                if (isHost) { this.syncInterval = setInterval(() => { if (this.ytPlayer && typeof this.ytPlayer.getPlayerState === 'function' && this.ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) { this.syncAction('seek'); } }, 1500); }
+            } else if (videoInfo.videoType === 'googledrive' || videoInfo.videoType === 'direct') {
+                const video = document.createElement('video');
+                video.src = videoInfo.videoType === 'googledrive' ? `/stream/${videoInfo.videoId}` : videoInfo.videoId;
+                video.controls = isHost;
+                video.autoplay = true;
+                video.playsInline = true;
+                if(videoInfo.time) video.currentTime = videoInfo.time;
+                this.elements.playerContainer.prepend(video);
+                this.player = video;
+                if (isHost) {
+                    video.onplay = () => { if (!this.isSyncing) this.syncAction('play'); };
+                    video.onpause = () => { if (!this.isSyncing) this.syncAction('pause'); };
+                    video.onseeked = () => { if (!this.isSyncing) this.syncAction('seek'); };
+                }
+            }
+            if (!isHost) {
+                const clickBlocker = document.createElement('div');
+                clickBlocker.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;';
+                this.elements.playerContainer.appendChild(clickBlocker);
+            }
+        },
+        
+        handleSync(payload) { this.isSyncing = true; if (this.ytPlayer && typeof this.ytPlayer.seekTo === 'function') { const player = this.ytPlayer; const timeDiff = Math.abs(player.getCurrentTime() - payload.time); if (timeDiff > 2.5) player.seekTo(payload.time, true); if (payload.action === 'play' && player.getPlayerState() !== YT.PlayerState.PLAYING) player.playVideo(); else if (payload.action === 'pause' && player.getPlayerState() !== YT.PlayerState.PAUSED) player.pauseVideo(); } else if (this.player && this.player.tagName === 'VIDEO') { if (Math.abs(this.player.currentTime - payload.time) > 2.5) this.player.currentTime = payload.time; if (payload.action === 'play' && this.player.paused) this.player.play().catch(e => {}); else if (payload.action === 'pause' && !this.player.paused) this.player.pause(); } setTimeout(() => { this.isSyncing = false; }, 500); },
+        syncAction(action) { if (this.userRole !== 'host') return; let currentTime = 0; if (this.ytPlayer && typeof this.ytPlayer.getCurrentTime === 'function') currentTime = this.ytPlayer.getCurrentTime(); else if (this.player && this.player.tagName === 'VIDEO') currentTime = this.player.currentTime; this.sendMessage('sync', { action, time: currentTime }); },
+        addVideoToPlaylist() { this.throttleAction(() => { const url = this.elements.videoUrlInput.value.trim(); if (url) { this.sendMessage('updatePlaylist', { action: 'add', url }); this.elements.videoUrlInput.value = ''; } }); },
+        updatePlaylist(playlist) { this.elements.playlistContainer.innerHTML = ''; if (!playlist || playlist.length === 0) { this.elements.playlistContainer.innerHTML = '<p style="color: var(--text-secondary); font-style: italic; text-align: center;">Playlist kosong.</p>'; return; } playlist.forEach((item, index) => { const itemEl = document.createElement('div'); itemEl.className = `playlist-item ${item.isPlaying ? 'playing' : ''}`; const nameSpan = document.createElement('span'); nameSpan.className = 'playlist-item-name'; nameSpan.title = item.url; nameSpan.textContent = item.url.split('/').pop() || item.url; itemEl.innerHTML = `<div class="playlist-item-actions">${this.userRole === 'host' ? `<button data-index="${index}" class="play-btn" title="Putar">▶</button> <button data-index="${index}" class="remove-btn" title="Hapus">✖</button>` : ''}</div>`; itemEl.prepend(nameSpan); this.elements.playlistContainer.appendChild(itemEl); }); if (this.userRole === 'host') { this.elements.playlistContainer.querySelectorAll('.play-btn').forEach(btn => btn.onclick = () => this.playFromPlaylist(btn.dataset.index)); this.elements.playlistContainer.querySelectorAll('.remove-btn').forEach(btn => btn.onclick = () => this.removeFromPlaylist(btn.dataset.index)); } },
+        playFromPlaylist(index) { this.sendMessage('updatePlaylist', { action: 'play', index: parseInt(index) }); },
+        removeFromPlaylist(index) { this.sendMessage('updatePlaylist', { action: 'remove', index: parseInt(index) }); },
+        showPollCreationModal(show) { this.elements.pollCreationModal.classList.toggle('visible', show); },
+        addPollOptionInput() { const optionCount = this.elements.pollOptionsInputs.children.length; if (optionCount >= 5) { this.showAlert("Maksimal 5 pilihan polling."); return; } const newOption = document.createElement('div'); newOption.className = 'poll-option-input'; newOption.innerHTML = `<input type="text" placeholder="Pilihan ${optionCount + 1}" maxlength="50"><button type="button" class="remove-option-btn">✖</button>`; newOption.querySelector('.remove-option-btn').onclick = () => newOption.remove(); this.elements.pollOptionsInputs.appendChild(newOption); },
+        submitPoll() { this.throttleAction(() => { const question = this.elements.pollQuestionInput.value.trim(); if (!question) { this.showAlert("Pertanyaan polling tidak boleh kosong."); return; } const options = Array.from(this.elements.pollOptionsInputs.querySelectorAll('input')).map(input => input.value.trim()).filter(opt => opt); if (options.length < 2) { this.showAlert("Polling harus memiliki setidaknya 2 pilihan."); return; } this.sendMessage('createPoll', { question, options }); this.showPollCreationModal(false); }); },
+        renderPoll(pollData) { if (!pollData) { this.elements.pollContainer.classList.remove('visible'); return; } this.elements.pollQuestion.textContent = pollData.question; this.elements.pollOptions.innerHTML = ''; const totalVotes = pollData.options.reduce((sum, opt) => sum + opt.votes, 0); pollData.options.forEach((option, index) => { const optionEl = document.createElement('div'); optionEl.className = 'poll-option'; if (pollData.voters[this.userId]) { optionEl.classList.add('voted'); } else { optionEl.onclick = () => this.sendMessage('vote', { optionIndex: index }); } const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0; const textSpan = document.createElement('span'); textSpan.className = 'poll-text'; textSpan.textContent = option.text; const votesSpan = document.createElement('span'); votesSpan.className = 'poll-votes'; votesSpan.textContent = option.votes; optionEl.innerHTML = `<div class="poll-progress" style="width: ${percentage}%;"></div>`; optionEl.appendChild(textSpan); optionEl.appendChild(votesSpan); this.elements.pollOptions.appendChild(optionEl); }); this.elements.closePollBtn.style.display = this.userRole === 'host' ? 'block' : 'none'; this.elements.pollContainer.classList.add('visible'); },
+        sendChatMessage(event) { event.preventDefault(); this.throttleAction(() => { const text = this.elements.chatInput.value.trim(); if (!text) return; this.sendMessage('chatMessage', { text }); this.stopTypingIndicator(); this.elements.chatInput.value = ''; }, 500); },
+        
+        displayChatMessage(payload, playSound = true) {
+            const placeholder = this.elements.chatBox.querySelector('#no-chat-placeholder');
+            if (placeholder) { placeholder.remove(); }
+            if (payload.system) { return; } 
+            if (playSound && payload.userId !== this.userId) { this.playChatSound(); } 
+            const msgEl = document.createElement('div');
+            msgEl.classList.add('chat-message'); 
+            if (payload.userId === this.userId) { msgEl.classList.add('mine'); } 
+            if (payload.isHost) { msgEl.classList.add('host-message'); } 
+            const avatar = document.createElement('img');
+            avatar.className = 'avatar';
+            avatar.src = `https://api.dicebear.com/8.x/fun-emoji/svg?seed=${encodeURIComponent(payload.username)}`;
+            avatar.alt = payload.username;
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            const info = document.createElement('div');
+            info.className = 'message-info';
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'username';
+            nameSpan.textContent = payload.username;
+            info.appendChild(nameSpan);
+            if (payload.isHost) { const badge = document.createElement('span'); badge.className = 'badge host'; badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.467 5.416L16.92 12.084l2.458 4.5h-3.305l-2.542-4.917-2.542 4.917H7.684l2.458-4.5L7.533 5.416h3.4l2.034 4.167L15.033 5.416z"></path></svg>`; badge.title = "Host"; info.appendChild(badge); }
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = payload.text;
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            content.appendChild(info);
+            content.appendChild(bubble);
+            content.appendChild(timestamp);
+            msgEl.appendChild(avatar);
+            msgEl.appendChild(content);
+            this.elements.chatBox.appendChild(msgEl);
+            this.elements.chatBox.scrollTop = this.elements.chatBox.scrollHeight;
+        },
+
+        handleTyping() { this.sendMessage('startTyping'); clearTimeout(this.typingTimeout); this.typingTimeout = setTimeout(() => { this.sendMessage('stopTyping'); }, 2000); },
+        stopTypingIndicator() { clearTimeout(this.typingTimeout); this.sendMessage('stopTyping'); },
+        updateTypingIndicator(typingUsers) { const otherTypers = typingUsers.filter(u => u.userId !== this.userId); if (otherTypers.length === 0) { this.elements.typingIndicator.textContent = ''; } else if (otherTypers.length === 1) { this.elements.typingIndicator.textContent = `${otherTypers[0].username} sedang mengetik...`; } else { this.elements.typingIndicator.textContent = `${otherTypers.length} orang sedang mengetik...`; } },
+        sendReaction(emoji) { this.throttleAction(() => { this.sendMessage('emojiReaction', { emoji }); }, 300); },
+        
+        // PERBAIKAN: Fungsi showReaction
+        showReaction(emoji) {
+            const reactionEl = document.createElement('div');
+            reactionEl.className = 'flying-emoji';
+            reactionEl.textContent = emoji;
+            reactionEl.style.left = `${Math.random() * 90 + 5}%`;
+            // Gunakan referensi yang sudah di-cache
+            if (this.elements.reactionOverlay) {
+                this.elements.reactionOverlay.appendChild(reactionEl);
+            }
+            setTimeout(() => reactionEl.remove(), 4000);
+        },
+
+        sendHostAnnouncement() { this.throttleAction(() => { const text = this.elements.hostAnnouncementInput.value.trim(); const gifUrl = this.elements.hostGifInput.value.trim(); if (!text && !gifUrl) { this.showAlert("Pesan atau GIF Super Chat tidak boleh kosong!"); return; }; this.sendMessage('hostAnnouncement', { text, gifUrl }); this.elements.hostAnnouncementInput.value = ''; this.elements.hostGifInput.value = ''; }); },
+        displaySuperChat(payload) {
+            const overlay = this.elements.superChatOverlay;
+            if (!overlay) return;
+            const marqueeContainer = document.createElement('div');
+            marqueeContainer.className = 'super-chat-marquee';
+            const banner = document.createElement('div');
+            banner.className = 'super-chat-banner';
+            const particleContainer = document.createElement('div');
+            particleContainer.className = 'particle-container';
+            for (let i = 0; i < 40; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                const size = Math.random() * 4 + 1;
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                p.style.left = `${Math.random() * 100}%`;
+                p.style.top = `${Math.random() * 100}%`;
+                p.style.animationDelay = `${Math.random() * 2.5}s`;
+                particleContainer.appendChild(p);
+            }
+            banner.appendChild(particleContainer);
+            const avatarWrapper = document.createElement('div');
+            avatarWrapper.className = 'super-chat-avatar-wrapper';
+            const frameImg = document.createElement('img');
+            frameImg.src = 'https://i.ibb.co/Hjtvmdw/1000243812-removebg-preview.webp';
+            frameImg.className = 'super-chat-avatar-frame';
+            frameImg.alt = 'Avatar Frame';
+            const avatar = document.createElement('img');
+            avatar.className = 'avatar';
+            avatar.src = `https://api.dicebear.com/8.x/fun-emoji/svg?seed=${encodeURIComponent(payload.username)}`;
+            avatar.alt = payload.username;
+            avatarWrapper.appendChild(avatar);
+            avatarWrapper.appendChild(frameImg);
+            const content = document.createElement('div');
+            content.className = 'super-chat-content';
+            const header = document.createElement('div');
+            header.className = 'super-chat-header';
+            header.textContent = `${payload.username} sent a Super Chat`;
+            content.appendChild(header);
+            if (payload.text) {
+                const body = document.createElement('div');
+                body.className = 'super-chat-body';
+                body.textContent = payload.text;
+                content.appendChild(body);
+            }
+            if (payload.gifUrl) {
+                const gif = document.createElement('img');
+                gif.src = payload.gifUrl;
+                gif.className = 'super-chat-gif';
+                gif.onerror = () => gif.remove();
+                content.appendChild(gif);
+            }
+            banner.appendChild(avatarWrapper);
+            banner.appendChild(content);
+            marqueeContainer.appendChild(banner);
+            overlay.appendChild(marqueeContainer);
+            setTimeout(() => { marqueeContainer.remove(); }, 15000);
+        },
+        switchTab(tabId) { this.elements.rightPanel.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); this.elements.rightPanel.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById(tabId).classList.add('active'); this.elements.rightPanel.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active'); },
+        copyRoomId() { navigator.clipboard.writeText(this.roomId).then(() => { this.updateCopyButton(true); setTimeout(() => this.updateCopyButton(false), 2000); }); },
+        updateCopyButton(copied = false) { const btn = document.getElementById('copy-room-id-btn'); if (!btn) return; if (copied) { btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--secondary-color);"><path d="M20 6 9 17l-5-5"></path></svg>`; btn.title = "Disalin!"; } else { btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>`; btn.title = "Salin ID Room"; } },
+        sendMessage(type, payload = {}) { if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type, payload })); },
+    };
+    
+    function onYouTubeIframeAPIReady() { /* YouTube API akan memanggil fungsi ini, App menangani pembuatan player. */ }
+    document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
+
