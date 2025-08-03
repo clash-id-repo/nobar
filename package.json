@@ -1,0 +1,22 @@
+{
+  "name": "nobar",
+  "version": "1.0.0",
+  "description": "Aplikasi Nonton Bareng (Nobar) v20",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "ARHVERSE",
+  "license": "© 2025 ARHVERSE",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "axios-cookiejar-support": "^5.0.2",
+    "cheerio": "^1.0.0-rc.12",
+    "express": "^4.19.2",
+    "tough-cookie": "^4.1.4",
+    "uuid": "^9.0.1",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {},
+  "keywords": []
+}
