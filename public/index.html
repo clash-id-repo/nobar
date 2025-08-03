@@ -144,7 +144,38 @@
         header { padding: 0.75rem 1.5rem; background: var(--surface-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); }
         #room-details { display: flex; flex-direction: column; align-items: flex-start; }
         #room-title { font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; background: var(--surface-light); padding: 0.5rem 1rem; border-radius: 8px; }
-        #copy-room-id-btn { background: none; border: none; cursor: pointer; padding: 0.3rem; display: flex; color: var(--primary-color); }
+        /* Tambahkan ini ke dalam tag <style> di index.html */
+
+#copy-room-id-btn {
+    display: inline-flex; /* Membuatnya sejajar dan bisa diatur ukurannya */
+    align-items: center;  /* Ikon jadi di tengah secara vertikal */
+    justify-content: center; /* Ikon jadi di tengah secara horizontal */
+    padding: 0.5rem;      /* Memberi jarak di dalam tombol */
+    border-radius: 8px;   /* Membuat sudutnya melengkung, sama seperti tombol lain */
+    background: var(--surface-light); /* Memberi warna latar belakang */
+    margin-left: 0.5rem;  /* Memberi sedikit jarak dari ID room */
+    transition: background-color 0.2s; /* Animasi halus saat di-hover */
+}
+
+#copy-room-id-btn:hover {
+    background-color: #444; /* Warna saat mouse di atas tombol */
+}
+
+/* Sedikit penyesuaian pada room-title agar lebih rapi */
+#room-title {
+    display: flex;
+    align-items: center;
+    gap: 0; /* Hapus gap default agar margin-left di tombol berfungsi */
+    background: none; /* Hapus background dari room-title */
+    padding: 0; /* Hapus padding dari room-title */
+}
+
+#room-title > span {
+    background: var(--surface-light);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
         #status-bar { font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; margin-top: 0.25rem; }
         .online-indicator { width: 8px; height: 8px; background-color: var(--online-color); border-radius: 50%; box-shadow: 0 0 5px var(--online-color); }
         #header-controls { display: flex; align-items: center; gap: 0.75rem; }
@@ -387,7 +418,27 @@
         syncInterval: null,
         localStream: null,
         peerConnections: {},
-        rtcConfig: { iceServers: [ { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' } ] },
+        // GANTI SELURUH BLOK rtcConfig DENGAN INI
+rtcConfig: {
+    iceServers: [
+        // STUN servers (tetap dipakai sebagai percobaan pertama yang cepat)
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:global.stun.twilio.com:3478' },
+
+        // --- KONFIGURASI TURN DARI TWILIO ---
+        // Ini akan menjadi cadangan jika STUN gagal
+        {
+          urls: [
+              'turn:global.turn.twilio.com:3478?transport=udp',
+              'turn:global.turn.twilio.com:3478?transport=tcp'
+          ],
+          // Ganti dengan kredensial dari dashboard Twilio-mu
+          username: 'AC87a4924dc08a70ff74a7929ddd5fd68e',    // <-- ISI DENGAN ACCOUNT SID KAMU
+          credential: '6e25c20587de2fe3e741ff77fa9b9ac1'     // <-- ISI DENGAN AUTH TOKEN KAMU
+        }
+    ]
+},
 
         init() {
             this.cacheDOMElements();
