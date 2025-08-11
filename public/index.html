@@ -255,22 +255,7 @@
         .chat-message.host-message:not(.mine) .message-bubble { background: var(--secondary-color); color: #121212; font-weight: 500; }
         .chat-message.mine.host-message .message-bubble { background: var(--secondary-color); color: #121212; font-weight: 500; }
 
-        #video-chat-panel { position: fixed; bottom: 20px; left: 20px; width: 260px; background-color: rgba(30, 30, 30, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 999; display: none; flex-direction: column; transition: transform 0.3s ease, opacity 0.3s ease; color: var(--text-color); }
-        #video-chat-panel.visible { display: flex; }
-        #video-chat-panel.fullscreen-mode { position: absolute; bottom: 70px; left: 20px; z-index: 25; }
-        #video-chat-header { padding: 0.5rem 0.75rem; background-color: rgba(44, 44, 44, 0.5); display: flex; justify-content: space-between; align-items: center; cursor: move; border-radius: 12px 12px 0 0; border-bottom: 1px solid var(--border-color); }
-        #video-chat-header h4 { font-size: 0.9rem; font-weight: 600; }
-        #toggle-video-panel-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.25rem; display: flex; align-items: center; }
-        #video-chat-content { padding: 0.75rem; max-height: 40vh; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; transition: all 0.3s ease; }
-        #video-chat-panel.collapsed #video-chat-content { max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; }
-        .video-wrapper { position: relative; background-color: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 4 / 3; }
-        .video-wrapper video { width: 100%; height: 100%; object-fit: cover; }
-        .video-wrapper.local-video-wrapper { grid-column: 1 / -1; }
-        .video-wrapper .local-video { transform: scaleX(-1); }
-        .video-wrapper .video-username { position: absolute; bottom: 5px; left: 8px; background: rgba(0,0,0,0.6); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
-        #local-video-controls { position: absolute; bottom: 5px; right: 5px; display: flex; gap: 5px; }
-        #local-video-controls button { background: rgba(255,255,255,0.2); backdrop-filter: blur(2px); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        #local-video-controls button.off { background: var(--danger-color); }
+        /* CSS UNTUK VIDEO CHAT TELAH DIHAPUS */
 
         @media (max-width: 1024px) { 
             body { height: auto; overflow: auto; } 
@@ -283,7 +268,6 @@
                 max-width: none; 
                 width: 100%; 
             } 
-            #video-chat-panel { width: 220px; } 
         }
 
         @media (orientation: landscape) and (max-height: 500px) {
@@ -298,7 +282,6 @@
     </style>
 </head>
 <body>
-    <!-- Landing Page HTML (tidak berubah) -->
     <div id="landing-page" class="page active">
         <main>
             <div class="form-container">
@@ -315,7 +298,6 @@
         </main>
     </div>
 
-    <!-- Room Page HTML (tidak berubah) -->
     <div id="room-page" class="page">
         <header>
             <div id="room-details"><div id="room-title"></div><div id="status-bar"></div></div>
@@ -326,7 +308,6 @@
             <section id="left-panel">
                 <div id="player-wrapper">
                     <div id="player-container">
-                        <!-- PERBAIKAN: Overlay dipastikan ada dari awal -->
                         <div class="waiting-overlay" style="display: none;"><h3>🍿 Menunggu Host memulai video...</h3></div>
                         <div id="reaction-overlay"></div>
                         <div id="super-chat-overlay"></div>
@@ -367,11 +348,6 @@
         <footer id="main-footer">NOBAR 🍿 ver.20.1 (Beta release) - ARH 🪄</footer>
     </div>
     
-    <!-- Other HTML (Modals, Video Chat Panel, etc. - tidak berubah) -->
-    <div id="video-chat-panel">
-        <div id="video-chat-header"><h4>Video Chat</h4><button id="toggle-video-panel-btn" title="Sembunyikan/Tampilkan Panel"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg></button></div>
-        <div id="video-chat-content"></div>
-    </div>
     <div id="custom-modal" class="modal-overlay"><div class="modal-content"><h3 id="modal-title">❗Pemberitahuan</h3><p id="modal-message"></p><button id="modal-close-btn">OK</button></div></div>
     <div id="poll-creation-modal" class="modal-overlay"><div class="modal-content"><h3>Buat Polling Baru</h3><input type="text" id="poll-question-input" placeholder="Tulis pertanyaan polling di sini..." maxlength="150"><div id="poll-options-inputs"><div class="poll-option-input"><input type="text" placeholder="Pilihan 1" maxlength="50"></div><div class="poll-option-input"><input type="text" placeholder="Pilihan 2" maxlength="50"></div></div><button id="add-poll-option-btn">Tambah Pilihan</button><button id="submit-poll-btn">Buat</button></div></div>
     <div id="toast-container"></div>
@@ -385,29 +361,11 @@
         audioContext: null,
         typingTimeout: null,
         syncInterval: null,
+        // Properti terkait Video Chat dinonaktifkan
         localStream: null,
         peerConnections: {},
-        // GANTI SELURUH BLOK rtcConfig DENGAN INI
-// GANTI SELURUH BLOK rtcConfig DENGAN INI
-rtcConfig: {
-    iceServers: [
-        // STUN server gratis
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun.openrelay.org:3478' },
+        rtcConfig: { /* Konfigurasi ini tidak lagi digunakan secara aktif */ },
 
-        // --- KONFIGURASI TURN DARI OPEN RELAY PROJECT ---
-        // Ini adalah server TURN publik dan gratis.
-        // PERINGATAN: Gunakan hanya untuk testing, bukan untuk produksi.
-        {
-          urls: [
-              'turn:openrelay.metered.ca:80',
-              'turn:openrelay.metered.ca:443'
-          ],
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        }
-    ]
-},
         init() {
             this.cacheDOMElements();
             this.bindEvents();
@@ -421,7 +379,6 @@ rtcConfig: {
                 roomIdInput: document.getElementById('room-id-input'), joinPasswordInput: document.getElementById('join-password-input'), joinRoomBtn: document.getElementById('join-room-btn'),
                 roomDetails: document.getElementById('room-details'), roomTitle: document.getElementById('room-title'), statusBar: document.getElementById('status-bar'),
                 playerWrapper: document.getElementById('player-wrapper'), playerContainer: document.getElementById('player-container'),
-                // PERBAIKAN: Ambil referensi ke overlay dari awal
                 waitingOverlay: document.querySelector('.waiting-overlay'),
                 reactionOverlay: document.getElementById('reaction-overlay'), 
                 reactionBar: document.getElementById('reaction-bar'),
@@ -441,17 +398,13 @@ rtcConfig: {
                 hostAnnouncementInput: document.getElementById('host-announcement-input'),
                 hostGifInput: document.getElementById('host-gif-input'),
                 sendSuperChatBtn: document.getElementById('send-super-chat-btn'),
-                videoChatPanel: document.getElementById('video-chat-panel'),
-                videoChatHeader: document.getElementById('video-chat-header'),
-                videoChatContent: document.getElementById('video-chat-content'),
-                toggleVideoPanelBtn: document.getElementById('toggle-video-panel-btn'),
+                // Elemen video chat dihapus dari cache
                 emojiBtn: document.getElementById('emoji-btn'),
                 emojiPickerContainer: document.getElementById('emoji-picker-container'),
                 emojiPicker: document.querySelector('emoji-picker'),
             };
         },
 
-        // bindEvents() tidak berubah
         bindEvents() {
             this.elements.createRoomBtn.onclick = () => this.createRoom();
             this.elements.joinRoomBtn.onclick = () => this.joinRoom();
@@ -472,8 +425,7 @@ rtcConfig: {
             this.elements.syncVideoBtn.onclick = () => this.sendMessage('requestSync');
             this.elements.fullscreenBtn.onclick = () => this.toggleFullscreen();
             this.elements.sendSuperChatBtn.onclick = () => this.sendHostAnnouncement();
-            this.elements.toggleVideoPanelBtn.onclick = () => this.elements.videoChatPanel.classList.toggle('collapsed');
-            this.makeDraggable(this.elements.videoChatPanel, this.elements.videoChatHeader);
+            // Event listener untuk video chat dinonaktifkan
             document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
 
             this.elements.emojiBtn.onclick = () => this.toggleEmojiPicker();
@@ -488,79 +440,35 @@ rtcConfig: {
             });
         },
         
-        // Fungsi lainnya (toggleEmojiPicker, insertEmoji, makeDraggable, media handling, dll) tidak berubah
         toggleEmojiPicker() { this.elements.emojiPickerContainer.classList.toggle('visible'); },
         insertEmoji(emoji) { const input = this.elements.chatInput; const start = input.selectionStart; const end = input.selectionEnd; const text = input.value; const before = text.substring(0, start); const after = text.substring(end, text.length); input.value = (before + emoji + after); input.selectionStart = input.selectionEnd = start + emoji.length; input.focus(); },
-        makeDraggable(panel, header) { let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0; header.onmousedown = dragMouseDown; function dragMouseDown(e) { e = e || window.event; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; } function elementDrag(e) { e = e || window.event; e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; panel.style.top = (panel.offsetTop - pos2) + "px"; panel.style.left = (panel.offsetLeft - pos1) + "px"; } function closeDragElement() { document.onmouseup = null; document.onmousemove = null; } },
-        async startLocalMedia() { try { this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); this.elements.videoChatPanel.classList.add('visible'); this.updateVideoGrid(); } catch (err) { console.error("Gagal mendapatkan akses media:", err); this.showAlert("Gagal mengakses kamera/mikrofon. Fitur video chat tidak akan aktif. Pastikan Anda memberikan izin di browser."); this.elements.videoChatPanel.classList.remove('visible'); } },
-        stopLocalMedia() { if (this.localStream) { this.localStream.getTracks().forEach(track => track.stop()); this.localStream = null; } Object.keys(this.peerConnections).forEach(peerId => this.closePeerConnection(peerId)); this.elements.videoChatPanel.classList.remove('visible'); },
-        toggleTrack(kind) { if (!this.localStream) return; const track = this.localStream.getTracks().find(t => t.kind === kind); if (track) { track.enabled = !track.enabled; const btn = document.getElementById(`toggle-${kind}-btn`); if(btn) { btn.classList.toggle('off', !track.enabled); } } },
-        createPeerConnection(peerId) { const pc = new RTCPeerConnection(this.rtcConfig); pc.onicecandidate = event => { if (event.candidate) this.sendMessage('webrtc-candidate', { targetUserId: peerId, candidate: event.candidate }); }; pc.ontrack = event => { const videoEl = document.getElementById(`video-${peerId}`); if (videoEl && event.streams && event.streams[0]) videoEl.srcObject = event.streams[0]; }; if (this.localStream) { this.localStream.getTracks().forEach(track => pc.addTrack(track, this.localStream)); } this.peerConnections[peerId] = pc; return pc; },
-        closePeerConnection(peerId) { if (this.peerConnections[peerId]) { this.peerConnections[peerId].close(); delete this.peerConnections[peerId]; } const videoWrapper = document.getElementById(`video-wrapper-${peerId}`); if (videoWrapper) videoWrapper.remove(); },
-        async handleOffer(fromUserId, offer) { if (this.peerConnections[fromUserId]) return; const pc = this.createPeerConnection(fromUserId); await pc.setRemoteDescription(new RTCSessionDescription(offer)); const answer = await pc.createAnswer(); await pc.setLocalDescription(answer); this.sendMessage('webrtc-answer', { targetUserId: fromUserId, answer }); },
-        async handleAnswer(fromUserId, answer) { const pc = this.peerConnections[fromUserId]; if (pc && pc.signalingState !== 'stable') await pc.setRemoteDescription(new RTCSessionDescription(answer)); },
-        async handleCandidate(fromUserId, candidate) { const pc = this.peerConnections[fromUserId]; if (pc) { try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) { console.error('Error adding ICE candidate', e); } } },
-                async initiatePeerConnection(peerId) {
-            console.log(`%c[WebRTC Client] MEMULAI PROSES KONEKSI ke: ${peerId}`, 'color: #00bcd4; font-weight: bold;');
-            if (!this.localStream || this.peerConnections[peerId]) {
-                console.warn(`[WebRTC Client] Proses ke ${peerId} dibatalkan (stream tidak ada atau koneksi sudah ada).`);
-                return;
-            }
-
-            const pc = this.createPeerConnection(peerId);
-            console.log(`[WebRTC Client] Peer connection object dibuat untuk: ${peerId}`);
-
-            try {
-                // Langkah 1: Membuat "Offer"
-                const offer = await pc.createOffer();
-                console.log(`[WebRTC Client] Langkah 1: Offer berhasil dibuat untuk: ${peerId}`);
-
-                // Langkah 2: Menetapkan Offer sebagai deskripsi lokal
-                await pc.setLocalDescription(offer);
-                console.log(`[WebRTC Client] Langkah 2: Local description berhasil di-set untuk: ${peerId}`);
-
-                // Langkah 3: Mengirim Offer ke user lain via server
-                this.sendMessage('webrtc-offer', { targetUserId: peerId, offer });
-                console.log(`%c[WebRTC Client] Langkah 3: ===> PESAN OFFER DIKIRIM ke: ${peerId}`, 'color: #4caf50; font-weight: bold;');
-
-            } catch (err) {
-                // Jika salah satu langkah di atas gagal, ini akan tereksekusi
-                console.error(`[WebRTC Client] GAGAL saat membuat atau mengirim offer ke ${peerId}:`, err);
-            }
-        },
+        
+        // ===============================================
+        // == BLOK FUNGSI VIDEO CHAT DINONAKTIFKAN ==
+        // ===============================================
+        makeDraggable(panel, header) { /* Dinonaktifkan */ },
+        async startLocalMedia() { /* Dinonaktifkan */ },
+        stopLocalMedia() { /* Dinonaktifkan */ },
+        toggleTrack(kind) { /* Dinonaktifkan */ },
+        createPeerConnection(peerId) { /* Dinonaktifkan */ },
+        closePeerConnection(peerId) { /* Dinonaktifkan */ },
+        async handleOffer(fromUserId, offer) { /* Dinonaktifkan */ },
+        async handleAnswer(fromUserId, answer) { /* Dinonaktifkan */ },
+        async handleCandidate(fromUserId, candidate) { /* Dinonaktifkan */ },
+        async initiatePeerConnection(peerId) { /* Dinonaktifkan */ },
+        updateVideoGrid(users = []) { /* Dinonaktifkan */ },
+        // ===============================================
+        
         async toggleFullscreen() { try { if (!document.fullscreenElement) { await this.elements.playerWrapper.requestFullscreen(); if (screen.orientation && typeof screen.orientation.lock === 'function') { await screen.orientation.lock('landscape').catch(() => {}); } } else { if (screen.orientation && typeof screen.orientation.unlock === 'function') { screen.orientation.unlock(); } await document.exitFullscreen(); } } catch (err) { console.error("Fullscreen/Landscape Error:", err); this.showAlert("Mode bioskop tidak dapat diaktifkan di perangkat atau browser ini."); } },
+        
         handleFullscreenChange() {
+            // Fungsi ini sebelumnya mengatur panel video chat.
+            // Karena video chat dinonaktifkan, fungsi ini tidak melakukan apa-apa lagi.
             const isFullscreen = !!document.fullscreenElement;
-            const panel = this.elements.videoChatPanel;
-            const controls = this.elements.viewerControls;
-            
-            // Hapus referensi ke tombol toggle karena tidak dipakai lagi
-            let toggleBtn = document.getElementById('toggle-video-fullscreen-btn');
-            if(toggleBtn) toggleBtn.remove();
-
-            if (isFullscreen) {
-                // Saat masuk fullscreen:
-                // 1. Pindahkan panel ke dalam player wrapper agar ikut fullscreen
-                this.elements.playerWrapper.appendChild(panel);
-                // 2. Tambahkan class untuk penanda (jika perlu styling khusus)
-                panel.classList.add('fullscreen-mode');
-                // 3. SEMBUNYIKAN panel video chat
-                panel.style.display = 'none';
-            } else {
-                // Saat keluar dari fullscreen:
-                // 1. Kembalikan panel ke body utama
-                document.body.appendChild(panel);
-                // 2. Hapus class fullscreen-mode
-                panel.classList.remove('fullscreen-mode');
-                // 3. Reset posisi dan pastikan panel terlihat kembali jika memang seharusnya terlihat
-                panel.style.top = 'auto';
-                panel.style.left = '20px';
-                panel.style.bottom = '20px';
-                panel.style.display = ''; // Hapus inline style 'none' agar kembali ke aturan CSS awal
-            }
         },
-        async connectAndJoin(joinPayload) { if (this.ws && this.ws.readyState === WebSocket.OPEN) { this.sendMessage('joinRoom', joinPayload); } else { const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'; this.ws = new WebSocket(`${protocol}//${window.location.host}`); this.ws.onopen = () => this.sendMessage('joinRoom', joinPayload); this.ws.onmessage = (event) => this.handleServerMessage(event); this.ws.onclose = () => { if (this.userRole) this.showAlert("❗ Koneksi ke server terputus. Silakan segarkan halaman", "Koneksi Terputus"); this.stopLocalMedia(); }; this.ws.onerror = (err) => { if (!this.userRole) this.showAlert("Tidak dapat terhubung ke server. Pastikan server berjalan dan coba lagi."); }; } },
-        leaveRoom() { this.sendMessage('leaveRoom'); localStorage.removeItem('watch-party-session'); this.stopLocalMedia(); window.history.replaceState({}, document.title, window.location.pathname); setTimeout(() => window.location.reload(), 100); },
+
+        async connectAndJoin(joinPayload) { if (this.ws && this.ws.readyState === WebSocket.OPEN) { this.sendMessage('joinRoom', joinPayload); } else { const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'; this.ws = new WebSocket(`${protocol}//${window.location.host}`); this.ws.onopen = () => this.sendMessage('joinRoom', joinPayload); this.ws.onmessage = (event) => this.handleServerMessage(event); this.ws.onclose = () => { if (this.userRole) this.showAlert("❗ Koneksi ke server terputus. Silakan segarkan halaman", "Koneksi Terputus"); this.stopLocalMedia(); /* Panggilan ini aman karena fungsinya kosong */ }; this.ws.onerror = (err) => { if (!this.userRole) this.showAlert("Tidak dapat terhubung ke server. Pastikan server berjalan dan coba lagi."); }; } },
+        leaveRoom() { this.sendMessage('leaveRoom'); localStorage.removeItem('watch-party-session'); this.stopLocalMedia(); /* Panggilan ini aman karena fungsinya kosong */ window.history.replaceState({}, document.title, window.location.pathname); setTimeout(() => window.location.reload(), 100); },
 
         handleServerMessage(event) {
             const data = JSON.parse(event.data);
@@ -568,7 +476,7 @@ rtcConfig: {
                 case 'joinedRoom': 
                     this.roomId = data.payload.roomId; 
                     this.switchToPage('room'); 
-                    this.startLocalMedia();
+                    // this.startLocalMedia(); // Panggilan untuk memulai video chat dinonaktifkan
                     this.elements.roomTitle.innerHTML = `<span>${this.roomId}</span><button id="copy-room-id-btn" title="Salin ID Room"></button>`; 
                     this.updateCopyButton(false); 
                     document.getElementById('copy-room-id-btn').onclick = () => this.copyRoomId(); 
@@ -601,43 +509,20 @@ rtcConfig: {
                     this.userRole = null; 
                     this.ws.onclose = null; 
                     if (this.ws && this.ws.readyState !== WebSocket.CLOSED) { this.ws.close(); }
-                    this.stopLocalMedia();
+                    this.stopLocalMedia(); // Panggilan ini aman karena fungsinya kosong
                     localStorage.removeItem('watch-party-session');
                     window.history.replaceState({}, document.title, '/');
                     this.elements.modalCloseBtn.textContent = "Kembali ke Awal";
                     this.elements.modalCloseBtn.onclick = () => { window.location.href = '/'; };
                     break;
-                case 'webrtc-offer': this.handleOffer(data.payload.fromUserId, data.payload.offer); break;
-                case 'webrtc-answer': this.handleAnswer(data.payload.fromUserId, data.payload.answer); break;
-                case 'webrtc-candidate': this.handleCandidate(data.payload.fromUserId, data.payload.candidate); break;
-                case 'user-left-for-webrtc': this.closePeerConnection(data.payload.userId); break;
+                // Kasus untuk WebRTC dinonaktifkan
+                // case 'webrtc-offer': this.handleOffer(data.payload.fromUserId, data.payload.offer); break;
+                // case 'webrtc-answer': this.handleAnswer(data.payload.fromUserId, data.payload.answer); break;
+                // case 'webrtc-candidate': this.handleCandidate(data.payload.fromUserId, data.payload.candidate); break;
+                // case 'user-left-for-webrtc': this.closePeerConnection(data.payload.userId); break;
             }
         },
         
-        updateVideoGrid(users = []) {
-            if (!this.elements.videoChatPanel.classList.contains('visible')) return;
-            const content = this.elements.videoChatContent;
-            content.innerHTML = '';
-            if (this.localStream) {
-                const localWrapper = document.createElement('div');
-                localWrapper.className = 'video-wrapper local-video-wrapper';
-                localWrapper.id = `video-wrapper-${this.userId}`;
-                localWrapper.innerHTML = `<video id="local-video" class="local-video" autoplay muted playsinline></video><div class="video-username">Anda</div><div id="local-video-controls"><button id="toggle-audio-btn" title="Mute/Unmute Mic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"/><path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/></svg></button><button id="toggle-video-btn" title="On/Off Camera"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.5 2.5a.5.5 0 0 0-1 0L12 5.5V4.5a.5.5 0 0 0-1 0v2.5a.5.5 0 0 0 .5.5h2.5a.5.5 0 0 0 0-1H12.5L15 4l.5-.5zM1 4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1V4zm1 0v1h6V4H2zm-1 3v6h10V7H1z"/></svg></button></div>`;
-                content.appendChild(localWrapper);
-                document.getElementById('local-video').srcObject = this.localStream;
-                document.getElementById('toggle-audio-btn').onclick = () => this.toggleTrack('audio');
-                document.getElementById('toggle-video-btn').onclick = () => this.toggleTrack('video');
-            }
-            users.forEach(user => {
-                if (user.id === this.userId) return;
-                const remoteWrapper = document.createElement('div');
-                remoteWrapper.className = 'video-wrapper';
-                remoteWrapper.id = `video-wrapper-${user.id}`;
-                remoteWrapper.innerHTML = `<video id="video-${user.id}" autoplay playsinline></video><div class="video-username">${user.username}</div>`;
-                content.appendChild(remoteWrapper);
-            });
-        },
-
         updateUsers(users) {
             this.elements.statusBar.innerHTML = `<span class="online-indicator"></span><span>${users.length} orang online</span>`;
             this.elements.usersPanelContent.innerHTML = '';
@@ -670,17 +555,16 @@ rtcConfig: {
             });
             this.elements.usersPanelContent.querySelectorAll('.make-host-btn').forEach(btn => { btn.onclick = () => this.sendMessage('delegateHost', { targetUserId: btn.dataset.userid }); });
             this.elements.usersPanelContent.querySelectorAll('.kick-btn').forEach(btn => { btn.onclick = () => this.sendMessage('kickUser', { targetUserId: btn.dataset.userid }); });
-            this.updateVideoGrid(users);
-            const connectedUserIds = users.map(u => u.id);
-            Object.keys(this.peerConnections).forEach(peerId => { if (!connectedUserIds.includes(peerId)) this.closePeerConnection(peerId); });
-            users.forEach(user => {
-    // ATURAN BARU UNTUK MENGHINDARI "GLARE" / RACE CONDITION
-    // Hanya inisiasi koneksi jika ID kita "lebih besar" dari ID user lain.
-    // Ini memastikan hanya satu dari dua user yang akan memulai koneksi.
-    if (user.id !== this.userId && !this.peerConnections[user.id] && this.userId > user.id) {
-        this.initiatePeerConnection(user.id);
-    }
-});
+            
+            // Logika untuk WebRTC dan Video Grid dinonaktifkan
+            // this.updateVideoGrid(users); 
+            // const connectedUserIds = users.map(u => u.id);
+            // Object.keys(this.peerConnections).forEach(peerId => { if (!connectedUserIds.includes(peerId)) this.closePeerConnection(peerId); });
+            // users.forEach(user => {
+            // if (user.id !== this.userId && !this.peerConnections[user.id] && this.userId > user.id) {
+            //     this.initiatePeerConnection(user.id);
+            // }
+            // });
         },
         
         throttleAction(action, delay = 1000) { if (this.isActionPending) { this.showToast("Tunggu sebentar sebelum melakukan aksi lagi."); return; } this.isActionPending = true; action(); setTimeout(() => { this.isActionPending = false; }, delay); },
@@ -693,27 +577,23 @@ rtcConfig: {
         joinRoom() { const roomId = this.elements.roomIdInput.value.trim(); if (!roomId) { this.showAlert('ID Room tidak boleh kosong!'); return; } let username = this.elements.usernameInput.value.trim(); if (!username) { username = `user${Math.floor(100000 + Math.random() * 900000)}`; } const password = this.elements.joinPasswordInput.value; this.username = username; this.roomId = roomId; this.connectAndJoin({ username, roomId, password }); },
         switchToPage(pageName) { Object.values(this.elements.pages).forEach(p => p.classList.remove('active')); this.elements.pages[pageName].classList.add('active'); },
         
-        // PERBAIKAN: Fungsi showWaitingScreen
         showWaitingScreen() {
             this.elements.playerContainer.innerHTML = ''; // Hapus semua video/iframe
-            // Tambahkan kembali overlay yang penting
             this.elements.playerContainer.appendChild(this.elements.waitingOverlay);
             this.elements.playerContainer.appendChild(this.elements.reactionOverlay);
             this.elements.playerContainer.appendChild(this.elements.superChatOverlay);
-            this.elements.waitingOverlay.style.display = 'flex'; // Tampilkan pesan menunggu
+            this.elements.waitingOverlay.style.display = 'flex';
         },
 
-        // PERBAIKAN: Fungsi loadVideo
         loadVideo(videoInfo) {
             clearInterval(this.syncInterval);
             this.ytPlayer = null;
             this.player = null;
-            this.elements.playerContainer.innerHTML = ''; // Hapus semua
-            // Tambahkan kembali overlay yang penting
+            this.elements.playerContainer.innerHTML = '';
             this.elements.playerContainer.appendChild(this.elements.reactionOverlay);
             this.elements.playerContainer.appendChild(this.elements.superChatOverlay);
             
-            this.elements.waitingOverlay.style.display = 'none'; // Sembunyikan pesan menunggu
+            this.elements.waitingOverlay.style.display = 'none';
             const isHost = this.userRole === 'host';
 
             if (videoInfo.videoType === 'youtube') {
@@ -798,13 +678,11 @@ rtcConfig: {
         updateTypingIndicator(typingUsers) { const otherTypers = typingUsers.filter(u => u.userId !== this.userId); if (otherTypers.length === 0) { this.elements.typingIndicator.textContent = ''; } else if (otherTypers.length === 1) { this.elements.typingIndicator.textContent = `${otherTypers[0].username} sedang mengetik...`; } else { this.elements.typingIndicator.textContent = `${otherTypers.length} orang sedang mengetik...`; } },
         sendReaction(emoji) { this.throttleAction(() => { this.sendMessage('emojiReaction', { emoji }); }, 300); },
         
-        // PERBAIKAN: Fungsi showReaction
         showReaction(emoji) {
             const reactionEl = document.createElement('div');
             reactionEl.className = 'flying-emoji';
             reactionEl.textContent = emoji;
             reactionEl.style.left = `${Math.random() * 90 + 5}%`;
-            // Gunakan referensi yang sudah di-cache
             if (this.elements.reactionOverlay) {
                 this.elements.reactionOverlay.appendChild(reactionEl);
             }
@@ -881,4 +759,3 @@ rtcConfig: {
     </script>
 </body>
 </html>
-
